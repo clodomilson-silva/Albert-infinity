@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/health_service.dart';
 
 class HeartRatePage extends StatefulWidget {
   const HeartRatePage({super.key});
@@ -12,6 +12,7 @@ class HeartRatePage extends StatefulWidget {
 }
 
 class _HeartRatePageState extends State<HeartRatePage> {
+  final HealthService _healthService = HealthService.instance;
   CameraController? _cameraController;
   bool _isInitialized = false;
   bool _isMonitoring = false;
@@ -19,7 +20,7 @@ class _HeartRatePageState extends State<HeartRatePage> {
   int _countdown = 0;
   Timer? _measurementTimer;
   Timer? _countdownTimer;
-  final List<double> _readings = [];
+  StreamSubscription<int>? _heartRateSubscription;
   
   @override
   void initState() {
@@ -32,6 +33,11 @@ class _HeartRatePageState extends State<HeartRatePage> {
     _cameraController?.dispose();
     _measurementTimer?.cancel();
     _countdownTimer?.cancel();
+    _heartRateSubscription?.cancel();
+    
+    // Parar o sensor cardíaco quando sair da página
+    _healthService.stopHeartRateMonitoring();
+    
     super.dispose();
   }
   
@@ -87,12 +93,23 @@ class _HeartRatePageState extends State<HeartRatePage> {
     setState(() {
       _isMonitoring = true;
       _countdown = 15; // 15 segundos de medição
-      _readings.clear();
       _heartRate = 0;
     });
     
     // Ligar o flash da câmera
     _cameraController!.setFlashMode(FlashMode.torch);
+    
+    // Iniciar o sensor de batimentos cardíacos
+    _healthService.startHeartRateMonitoring();
+    
+    // Escutar os dados do sensor
+    _heartRateSubscription = _healthService.heartRateStream.listen((heartRate) {
+      if (_isMonitoring && mounted) {
+        setState(() {
+          _heartRate = heartRate;
+        });
+      }
+    });
     
     // Timer para contagem regressiva
     _countdownTimer = Timer.periodic(Duration(seconds: 1), (timer) {
@@ -105,47 +122,22 @@ class _HeartRatePageState extends State<HeartRatePage> {
       }
     });
     
-    // Simular leituras de batimentos cardíacos
-    _measurementTimer = Timer.periodic(Duration(milliseconds: 500), (timer) {
-      if (_isMonitoring) {
-        _simulateHeartRateReading();
-      }
-    });
-  }
-  
-  void _simulateHeartRateReading() {
-    // Simular variação de luminosidade do dedo
-    // Em uma implementação real, você analisaria a variação
-    // de vermelho nos pixels da câmera
-    final random = Random();
-    final reading = 0.5 + (random.nextDouble() - 0.5) * 0.2;
-    _readings.add(reading);
-    
-    // Calcular BPM baseado nas variações
-    if (_readings.length >= 10) {
-      _calculateHeartRate();
-    }
-  }
-  
-  void _calculateHeartRate() {
-    if (_readings.length < 10) return;
-    
-    // Simular análise de pulso
-    // Em uma implementação real, você faria FFT ou análise de picos
-    final random = Random();
-    final baseBPM = 70;
-    final variation = random.nextInt(20) - 10;
-    final calculatedBPM = (baseBPM + variation).clamp(60, 100);
-    
-    setState(() {
-      _heartRate = calculatedBPM;
-    });
+    // Remover o timer de simulação, agora usando dados reais do sensor
+    // _measurementTimer = Timer.periodic(Duration(milliseconds: 500), (timer) {
+    //   if (_isMonitoring) {
+    //     _simulateHeartRateReading();
+    //   }
+    // });
   }
   
   void _stopMeasurement() {
     _measurementTimer?.cancel();
     _countdownTimer?.cancel();
+    _heartRateSubscription?.cancel();
     _cameraController?.setFlashMode(FlashMode.off);
+    
+    // Parar o sensor de batimentos cardíacos
+    _healthService.stopHeartRateMonitoring();
     
     setState(() {
       _isMonitoring = false;

@@ -18,7 +18,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final AuthService _authService = AuthService();
-  final HealthService _healthService = HealthService();
+  final HealthService _healthService = HealthService.instance;
   String userName = 'Usuário';
   int currentSteps = 0;
   double currentCalories = 0.0;
@@ -104,8 +104,8 @@ class _HomePageState extends State<HomePage> {
         }
       });
       
-      // Iniciar monitoramento de batimentos
-      _healthService.startHeartRateMonitoring();
+      // Não iniciar monitoramento automático de batimentos
+      // O sensor só será ativado quando o usuário acessar a página de medição
       
     } catch (e) {
       print('Erro ao inicializar serviço de saúde: $e');

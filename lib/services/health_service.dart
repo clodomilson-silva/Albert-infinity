@@ -6,6 +6,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HealthService {
+  static HealthService? _instance;
+  static HealthService get instance {
+    _instance ??= HealthService._internal();
+    return _instance!;
+  }
+  
+  HealthService._internal();
+  
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
@@ -19,6 +27,9 @@ class HealthService {
   Stream<double> get caloriesStream => _caloriesController.stream;
   Stream<int> get heartRateStream => _heartRateController.stream;
   
+  // Getter para verificar se está monitorando batimentos
+  bool get isHeartRateMonitoring => _isHeartRateMonitoring;
+  
   // Variáveis de controle
   StreamSubscription<StepCount>? _stepCountStream;
   StreamSubscription<PedestrianStatus>? _pedestrianStatusStream;
@@ -27,6 +38,7 @@ class HealthService {
   int _currentSteps = 0;
   int _initialSteps = 0;
   bool _isInitialized = false;
+  bool _isHeartRateMonitoring = false;
   
   // Inicializar o serviço de saúde
   Future<void> initialize() async {
@@ -111,7 +123,10 @@ class HealthService {
   
   // Simular medição de batimentos cardíacos
   void startHeartRateMonitoring() {
+    if (_isHeartRateMonitoring) return; // Já está monitorando
+    
     _heartRateTimer?.cancel();
+    _isHeartRateMonitoring = true;
     
     // Simular variação de batimentos (60-100 bpm normal)
     _heartRateTimer = Timer.periodic(Duration(seconds: 2), (timer) {
@@ -135,6 +150,7 @@ class HealthService {
   // Parar monitoramento de batimentos
   void stopHeartRateMonitoring() {
     _heartRateTimer?.cancel();
+    _isHeartRateMonitoring = false;
   }
   
   // Carregar dados do dia atual
