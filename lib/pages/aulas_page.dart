@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'workout_explorer_page.dart';
+import 'api_test_page.dart';
+import '../models/exercise_models.dart';
 
 class AulasPage extends StatelessWidget {
   const AulasPage({super.key});
@@ -23,6 +26,15 @@ class AulasPage extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.bug_report, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ApiTestPage()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.search, color: Colors.white),
             onPressed: () {},
@@ -74,6 +86,97 @@ class AulasPage extends StatelessWidget {
             ),
             const SizedBox(height: 30),
 
+            // Seção API Wger - Treinos Personalizados
+            Row(
+              children: [
+                const Icon(Icons.api, color: Color(0xFF7D4FFF), size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  "Treinos Personalizados",
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 15),
+
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF7D4FFF).withOpacity(0.8),
+                    const Color(0xFFBA9CFF).withOpacity(0.6),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Explore Milhares de Exercícios",
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Treinos organizados por grupo muscular e nível de dificuldade com a API Wger",
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Colors.white70,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const WorkoutExplorerPage(),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(0xFF7D4FFF),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: const Icon(Icons.explore, size: 20),
+                          label: Text(
+                            "Explorar Treinos",
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 30),
+
             // Seção Gratuitos
             Row(
               children: [
@@ -90,32 +193,37 @@ class AulasPage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 15),
-            
+
             _buildWorkoutCard(
-              title: "Treino para Iniciantes",
-              subtitle: "Exercícios básicos • 15 min",
+              title: "Treinos Iniciante",
+              subtitle: "Exercícios básicos da API Wger • Nível fácil",
               difficulty: "Iniciante",
               difficultyColor: Colors.green,
               icon: Icons.accessibility_new,
-              onTap: () => _showWorkoutDetails(context, "Treino para Iniciantes"),
-            ),
-            
-            _buildWorkoutCard(
-              title: "Cardio Matinal",
-              subtitle: "Aquecimento e alongamento • 10 min",
-              difficulty: "Fácil",
-              difficultyColor: Colors.blue,
-              icon: Icons.directions_run,
-              onTap: () => _showWorkoutDetails(context, "Cardio Matinal"),
+              onTap: () =>
+                  _navigateToWorkoutExplorer(context, WorkoutLevel.beginner),
             ),
 
             _buildWorkoutCard(
-              title: "Yoga Relaxante",
-              subtitle: "Respiração e flexibilidade • 20 min",
-              difficulty: "Iniciante",
-              difficultyColor: Colors.green,
-              icon: Icons.self_improvement,
-              onTap: () => _showWorkoutDetails(context, "Yoga Relaxante"),
+              title: "Treinos Intermediário",
+              subtitle: "Exercícios moderados da API Wger • Nível médio",
+              difficulty: "Intermediário",
+              difficultyColor: Colors.orange,
+              icon: Icons.fitness_center,
+              onTap: () => _navigateToWorkoutExplorer(
+                context,
+                WorkoutLevel.intermediate,
+              ),
+            ),
+
+            _buildWorkoutCard(
+              title: "Treinos Avançado",
+              subtitle: "Exercícios intensos da API Wger • Nível difícil",
+              difficulty: "Avançado",
+              difficultyColor: Colors.red,
+              icon: Icons.sports_gymnastics,
+              onTap: () =>
+                  _navigateToWorkoutExplorer(context, WorkoutLevel.advanced),
             ),
 
             const SizedBox(height: 30),
@@ -185,10 +293,7 @@ class AulasPage extends StatelessWidget {
         ),
         Text(
           label,
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            color: Colors.white70,
-          ),
+          style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70),
           textAlign: TextAlign.center,
         ),
       ],
@@ -243,11 +348,18 @@ class AulasPage extends StatelessWidget {
                           ),
                         ),
                         if (isPremium) ...[
-                          const Icon(Icons.diamond, color: Color(0xFFFFD700), size: 16),
+                          const Icon(
+                            Icons.diamond,
+                            color: Color(0xFFFFD700),
+                            size: 16,
+                          ),
                           const SizedBox(width: 4),
                         ],
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: difficultyColor.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(8),
@@ -306,10 +418,7 @@ class AulasPage extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               "Descrição do treino e exercícios inclusos...",
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: Colors.white70,
-              ),
+              style: GoogleFonts.poppins(fontSize: 14, color: Colors.white70),
             ),
             const SizedBox(height: 20),
             SizedBox(
@@ -357,10 +466,7 @@ class AulasPage extends StatelessWidget {
           children: [
             const Icon(Icons.diamond, color: Color(0xFFFFD700)),
             const SizedBox(width: 8),
-            Text(
-              "Premium",
-              style: GoogleFonts.poppins(color: Colors.white),
-            ),
+            Text("Premium", style: GoogleFonts.poppins(color: Colors.white)),
           ],
         ),
         content: Text(
@@ -395,6 +501,15 @@ class AulasPage extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _navigateToWorkoutExplorer(BuildContext context, WorkoutLevel level) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WorkoutExplorerPage(initialLevel: level),
       ),
     );
   }

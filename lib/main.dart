@@ -5,12 +5,11 @@ import 'core/theme.dart';
 import 'widgets/auth_wrapper.dart';
 import 'pages/login_page.dart';
 import 'pages/register_page.dart';
+import 'pages/test_image_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const AlbertInfinityApp());
 }
 
@@ -27,6 +26,7 @@ class AlbertInfinityApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
+        '/test-images': (context) => const TestImageWidget(),
       },
     );
   }

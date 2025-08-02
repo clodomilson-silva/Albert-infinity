@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Permissão para acesso à internet -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    
     <!-- Permissões para sensores de saúde -->
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.CAMERA" />
