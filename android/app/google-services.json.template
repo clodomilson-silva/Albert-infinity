@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "893322695095",
-    "project_id": "albert-personal-app",
-    "storage_bucket": "albert-personal-app.firebasestorage.app"
+    "project_number": "YOUR_PROJECT_NUMBER",
+    "project_id": "YOUR_PROJECT_ID",
+    "storage_bucket": "YOUR_PROJECT_ID.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:893322695095:android:f2b25167906132275f1832",
+        "mobilesdk_app_id": "YOUR_MOBILE_SDK_APP_ID",
         "android_client_info": {
-          "package_name": "com.example.albert_personal"
+          "package_name": "com.example.albert_infinity"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDPOVOdDroy_g-HhnVT__ZcNlY4yfNdb7g"
+          "current_key": "YOUR_API_KEY"
         }
       ],
       "services": {

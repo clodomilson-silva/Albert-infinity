@@ -43,3 +43,35 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase Configuration Files (SENSITIVE - DO NOT COMMIT)
+**/google-services.json
+**/GoogleService-Info.plist
+lib/firebase_options.dart
+
+# Android Signing Files (SENSITIVE - DO NOT COMMIT)
+**/*.keystore
+**/*.jks
+**/key.properties
+
+# iOS Provisioning Profiles and Certificates (SENSITIVE)
+**/*.mobileprovision
+**/*.p12
+**/*.cer
+**/*.certSigningRequest
+
+# Environment Variables and API Keys
+.env
+.env.local
+.env.production
+**/.env*
+
+# Local Database Files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup Files
+*.backup
+*.bak
+*~
