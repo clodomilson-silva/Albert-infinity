@@ -1,58 +1,65 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/auth_service.dart';
-import 'register_page.dart';
-import 'firebase_test_page.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final AuthService _authService = AuthService();
   
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  Future<void> _login() async {
+  Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
-      await _authService.signInWithEmailAndPassword(
+      await _authService.registerWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        name: _nameController.text.trim(),
       );
+
+      // Fazer logout imediatamente após o registro para forçar o login
+      await _authService.signOut();
 
       if (mounted) {
         // Mostrar mensagem de sucesso
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login realizado com sucesso!'),
+          SnackBar(
+            content: Text('Conta criada com sucesso! Faça login para continuar.'),
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
+            duration: Duration(seconds: 3),
           ),
         );
 
-        // Aguardar um momento para mostrar a mensagem
-        await Future.delayed(Duration(milliseconds: 500));
+        // Aguardar um momento para o usuário ver a mensagem
+        await Future.delayed(Duration(seconds: 1));
 
-        // O AuthWrapper já vai redirecionar automaticamente para a Home
-        // quando detectar que o usuário está autenticado
+        // Redirecionar para a tela de login
+        Navigator.of(context).pushReplacementNamed('/login');
       }
     } catch (e) {
       if (mounted) {
@@ -66,39 +73,6 @@ class _LoginPageState extends State<LoginPage> {
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  Future<void> _resetPassword() async {
-    if (_emailController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Digite seu email para recuperar a senha'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
-    try {
-      await _authService.resetPassword(_emailController.text.trim());
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Email de recuperação enviado!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: Colors.red,
-          ),
-        );
       }
     }
   }
@@ -128,29 +102,57 @@ class _LoginPageState extends State<LoginPage> {
                     color: Colors.white.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(50),
                   ),
-                  child: const Icon(Icons.fitness_center, size: 80, color: Colors.white),
+                  child: const Icon(Icons.fitness_center, size: 60, color: Colors.white),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 20),
                 
                 // Título
                 Text(
-                  'Albert Infinity',
+                  'Criar Conta',
                   style: GoogleFonts.poppins(
-                    fontSize: 32,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
                 Text(
-                  'Seu personal trainer digital',
+                  'Junte-se ao Albert Infinity',
                   style: GoogleFonts.poppins(
                     fontSize: 16,
                     color: Colors.white70,
                   ),
                 ),
-                const SizedBox(height: 50),
+                const SizedBox(height: 40),
                 
-                // Campo de email
+                // Campo Nome
+                TextFormField(
+                  controller: _nameController,
+                  style: const TextStyle(color: Colors.black),
+                  decoration: InputDecoration(
+                    hintText: 'Nome completo',
+                    hintStyle: TextStyle(color: Colors.grey.shade600),
+                    fillColor: Colors.white,
+                    filled: true,
+                    prefixIcon: const Icon(Icons.person, color: Colors.grey),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(25),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, insira seu nome';
+                    }
+                    if (value.length < 2) {
+                      return 'Nome deve ter pelo menos 2 caracteres';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                
+                // Campo Email
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -177,9 +179,9 @@ class _LoginPageState extends State<LoginPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 
-                // Campo de senha
+                // Campo Senha
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
@@ -205,29 +207,53 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Por favor, insira sua senha';
+                      return 'Por favor, insira uma senha';
+                    }
+                    if (value.length < 6) {
+                      return 'Senha deve ter pelo menos 6 caracteres';
                     }
                     return null;
                   },
                 ),
+                const SizedBox(height: 16),
                 
-                // Link esqueceu senha
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: _resetPassword,
-                    child: Text(
-                      'Esqueceu a senha?',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white70,
-                        fontSize: 12,
+                // Campo Confirmar Senha
+                TextFormField(
+                  controller: _confirmPasswordController,
+                  obscureText: _obscureConfirmPassword,
+                  style: const TextStyle(color: Colors.black),
+                  decoration: InputDecoration(
+                    hintText: 'Confirmar senha',
+                    hintStyle: TextStyle(color: Colors.grey.shade600),
+                    fillColor: Colors.white,
+                    filled: true,
+                    prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                        color: Colors.grey,
                       ),
+                      onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
                     ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(25),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Por favor, confirme sua senha';
+                    }
+                    if (value != _passwordController.text) {
+                      return 'Senhas não coincidem';
+                    }
+                    return null;
+                  },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
                 
-                // Botão de login
+                // Botão de cadastro
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -238,7 +264,7 @@ class _LoginPageState extends State<LoginPage> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
                       elevation: 0,
                     ),
-                    onPressed: _isLoading ? null : _login,
+                    onPressed: _isLoading ? null : _register,
                     child: _isLoading
                         ? const SizedBox(
                             height: 20,
@@ -249,7 +275,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           )
                         : Text(
-                            'Entrar',
+                            'Criar Conta',
                             style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -259,37 +285,14 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 20),
                 
-                // Link de cadastro
+                // Link para login
                 TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const RegisterPage()),
-                    );
-                  },
+                  onPressed: () => Navigator.pop(context),
                   child: Text(
-                    'Não tem conta? Cadastre-se',
+                    'Já tem uma conta? Fazer login',
                     style: GoogleFonts.poppins(
                       color: Colors.white70,
                       fontSize: 14,
-                    ),
-                  ),
-                ),
-                
-                // Botão de teste Firebase (apenas para desenvolvimento)
-                const SizedBox(height: 10),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const FirebaseTestPage()),
-                    );
-                  },
-                  child: Text(
-                    'Testar Conexão Firebase',
-                    style: GoogleFonts.poppins(
-                      color: Colors.white38,
-                      fontSize: 12,
                     ),
                   ),
                 ),
