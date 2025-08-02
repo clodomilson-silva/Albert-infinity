@@ -3,8 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../widgets/metric_tile.dart';
 import '../services/auth_service.dart';
+import '../services/health_service.dart';
 import 'imc_page.dart';
 import 'aulas_page.dart';
+import 'profile_page.dart';
+import 'heart_rate_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,25 +18,31 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final AuthService _authService = AuthService();
+  final HealthService _healthService = HealthService();
   String userName = 'Usuário';
+  int currentSteps = 0;
+  double currentCalories = 0.0;
+  int currentHeartRate = 0;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _initializeHealthService();
+  }
+
+  @override
+  void dispose() {
+    _healthService.dispose();
+    super.dispose();
   }
 
   Future<void> _loadUserData() async {
     try {
-      final userData = await _authService.getUserData();
-      if (userData != null && userData.exists) {
-        final data = userData.data() as Map<String, dynamic>;
+      final userData = await _authService.getCurrentUserData();
+      if (userData != null && mounted) {
         setState(() {
-          userName = data['name'] ?? _authService.currentUser?.displayName ?? 'Usuário';
-        });
-      } else if (_authService.currentUser?.displayName != null) {
-        setState(() {
-          userName = _authService.currentUser!.displayName!;
+          userName = userData['name'] ?? 'Usuário';
         });
       }
     } catch (e) {
@@ -61,6 +70,45 @@ class _HomePageState extends State<HomePage> {
           ),
         );
       }
+    }
+  }
+
+  Future<void> _initializeHealthService() async {
+    try {
+      await _healthService.initialize();
+      
+      // Escutar mudanças nos passos
+      _healthService.stepsStream.listen((steps) {
+        if (mounted) {
+          setState(() {
+            currentSteps = steps;
+          });
+        }
+      });
+      
+      // Escutar mudanças nas calorias
+      _healthService.caloriesStream.listen((calories) {
+        if (mounted) {
+          setState(() {
+            currentCalories = calories;
+          });
+        }
+      });
+      
+      // Escutar mudanças nos batimentos
+      _healthService.heartRateStream.listen((heartRate) {
+        if (mounted) {
+          setState(() {
+            currentHeartRate = heartRate;
+          });
+        }
+      });
+      
+      // Iniciar monitoramento de batimentos
+      _healthService.startHeartRateMonitoring();
+      
+    } catch (e) {
+      print('Erro ao inicializar serviço de saúde: $e');
     }
   }
 
@@ -144,9 +192,9 @@ class _HomePageState extends State<HomePage> {
               if (value == 'logout') {
                 _showLogoutDialog();
               } else if (value == 'profile') {
-                // TODO: Implementar tela de perfil
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Tela de perfil em desenvolvimento')),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfilePage()),
                 );
               }
             },
@@ -187,12 +235,24 @@ class _HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Métricas do dia
-            const Row(
+            Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                MetricTile(title: "Passos", value: "7.268", icon: Icons.directions_walk),
-                MetricTile(title: "Calorias", value: "415", icon: Icons.local_fire_department),
-                MetricTile(title: "Batimentos", value: "98", icon: Icons.favorite),
+                MetricTile(title: "Passos", value: currentSteps.toString(), icon: Icons.directions_walk),
+                MetricTile(title: "Calorias", value: currentCalories.toStringAsFixed(0), icon: Icons.local_fire_department),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const HeartRatePage()),
+                    );
+                  },
+                  child: MetricTile(
+                    title: "Batimentos", 
+                    value: currentHeartRate > 0 ? currentHeartRate.toString() : "--", 
+                    icon: Icons.favorite
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 30),

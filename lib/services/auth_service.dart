@@ -122,4 +122,17 @@ class AuthService {
         return 'Erro de autenticação: ${e.message}';
     }
   }
+
+  // Obter dados do usuário atual
+  Future<Map<String, dynamic>?> getCurrentUserData() async {
+    final user = _auth.currentUser;
+    if (user == null) return null;
+
+    try {
+      final doc = await _firestore.collection('users').doc(user.uid).get();
+      return doc.data();
+    } catch (e) {
+      throw Exception('Erro ao carregar dados do usuário: $e');
+    }
+  }
 }
