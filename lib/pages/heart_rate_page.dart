@@ -21,26 +21,26 @@ class _HeartRatePageState extends State<HeartRatePage> {
   Timer? _measurementTimer;
   Timer? _countdownTimer;
   StreamSubscription<int>? _heartRateSubscription;
-  
+
   @override
   void initState() {
     super.initState();
     _initializeCamera();
   }
-  
+
   @override
   void dispose() {
     _cameraController?.dispose();
     _measurementTimer?.cancel();
     _countdownTimer?.cancel();
     _heartRateSubscription?.cancel();
-    
+
     // Parar o sensor cardíaco quando sair da página
     _healthService.stopHeartRateMonitoring();
-    
+
     super.dispose();
   }
-  
+
   Future<void> _initializeCamera() async {
     try {
       final cameras = await availableCameras();
@@ -48,21 +48,21 @@ class _HeartRatePageState extends State<HeartRatePage> {
         _showError('Nenhuma câmera encontrada');
         return;
       }
-      
+
       // Usar câmera traseira se disponível
       final camera = cameras.firstWhere(
         (camera) => camera.lensDirection == CameraLensDirection.back,
         orElse: () => cameras.first,
       );
-      
+
       _cameraController = CameraController(
         camera,
         ResolutionPreset.low,
         enableAudio: false,
       );
-      
+
       await _cameraController!.initialize();
-      
+
       if (mounted) {
         setState(() {
           _isInitialized = true;
@@ -72,36 +72,33 @@ class _HeartRatePageState extends State<HeartRatePage> {
       _showError('Erro ao inicializar câmera: $e');
     }
   }
-  
+
   void _showError(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(message), backgroundColor: Colors.red),
       );
     }
   }
-  
+
   void _startMeasurement() {
     if (!_isInitialized || _cameraController == null) {
       _showError('Câmera não está pronta');
       return;
     }
-    
+
     setState(() {
       _isMonitoring = true;
       _countdown = 15; // 15 segundos de medição
       _heartRate = 0;
     });
-    
+
     // Ligar o flash da câmera
     _cameraController!.setFlashMode(FlashMode.torch);
-    
+
     // Iniciar o sensor de batimentos cardíacos
     _healthService.startHeartRateMonitoring();
-    
+
     // Escutar os dados do sensor
     _heartRateSubscription = _healthService.heartRateStream.listen((heartRate) {
       if (_isMonitoring && mounted) {
@@ -110,18 +107,18 @@ class _HeartRatePageState extends State<HeartRatePage> {
         });
       }
     });
-    
+
     // Timer para contagem regressiva
     _countdownTimer = Timer.periodic(Duration(seconds: 1), (timer) {
       setState(() {
         _countdown--;
       });
-      
+
       if (_countdown <= 0) {
         _stopMeasurement();
       }
     });
-    
+
     // Remover o timer de simulação, agora usando dados reais do sensor
     // _measurementTimer = Timer.periodic(Duration(milliseconds: 500), (timer) {
     //   if (_isMonitoring) {
@@ -129,34 +126,32 @@ class _HeartRatePageState extends State<HeartRatePage> {
     //   }
     // });
   }
-  
+
   void _stopMeasurement() {
     _measurementTimer?.cancel();
     _countdownTimer?.cancel();
     _heartRateSubscription?.cancel();
     _cameraController?.setFlashMode(FlashMode.off);
-    
+
     // Parar o sensor de batimentos cardíacos
     _healthService.stopHeartRateMonitoring();
-    
+
     setState(() {
       _isMonitoring = false;
       _countdown = 0;
     });
-    
+
     if (_heartRate > 0) {
       _showResult();
     }
   }
-  
+
   void _showResult() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.grey.shade900,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           'Resultado da Medição',
           style: GoogleFonts.poppins(
@@ -168,11 +163,7 @@ class _HeartRatePageState extends State<HeartRatePage> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.favorite,
-              color: Colors.red,
-              size: 48,
-            ),
+            Icon(Icons.favorite, color: Colors.red, size: 48),
             SizedBox(height: 16),
             Text(
               '$_heartRate BPM',
@@ -185,10 +176,7 @@ class _HeartRatePageState extends State<HeartRatePage> {
             SizedBox(height: 8),
             Text(
               _getHeartRateStatus(_heartRate),
-              style: GoogleFonts.poppins(
-                color: Colors.white70,
-                fontSize: 14,
-              ),
+              style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14),
               textAlign: TextAlign.center,
             ),
           ],
@@ -208,13 +196,13 @@ class _HeartRatePageState extends State<HeartRatePage> {
       ),
     );
   }
-  
+
   String _getHeartRateStatus(int bpm) {
     if (bpm < 60) return 'Abaixo do normal (Bradicardia)';
     if (bpm <= 100) return 'Normal (Frequência cardíaca saudável)';
     return 'Acima do normal (Taquicardia)';
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -238,7 +226,7 @@ class _HeartRatePageState extends State<HeartRatePage> {
       body: _buildBody(),
     );
   }
-  
+
   Widget _buildBody() {
     if (!_isInitialized) {
       return Center(
@@ -249,16 +237,13 @@ class _HeartRatePageState extends State<HeartRatePage> {
             SizedBox(height: 16),
             Text(
               'Inicializando câmera...',
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontSize: 16,
-              ),
+              style: GoogleFonts.poppins(color: Colors.white, fontSize: 16),
             ),
           ],
         ),
       );
     }
-    
+
     return Column(
       children: [
         // Instruções
@@ -266,11 +251,7 @@ class _HeartRatePageState extends State<HeartRatePage> {
           padding: EdgeInsets.all(20),
           child: Column(
             children: [
-              Icon(
-                Icons.fingerprint,
-                color: Color(0xFF7D4FFF),
-                size: 64,
-              ),
+              Icon(Icons.fingerprint, color: Color(0xFF7D4FFF), size: 64),
               SizedBox(height: 16),
               Text(
                 'Como medir:',
@@ -296,7 +277,7 @@ class _HeartRatePageState extends State<HeartRatePage> {
             ],
           ),
         ),
-        
+
         // Preview da câmera
         Expanded(
           child: Container(
@@ -325,7 +306,7 @@ class _HeartRatePageState extends State<HeartRatePage> {
             ),
           ),
         ),
-        
+
         // Status da medição
         if (_isMonitoring) ...[
           Container(
@@ -349,10 +330,7 @@ class _HeartRatePageState extends State<HeartRatePage> {
                 SizedBox(height: 8),
                 Text(
                   '$_countdown segundos restantes',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
+                  style: GoogleFonts.poppins(color: Colors.white, fontSize: 16),
                 ),
                 if (_heartRate > 0) ...[
                   SizedBox(height: 12),
@@ -370,7 +348,7 @@ class _HeartRatePageState extends State<HeartRatePage> {
           ),
           SizedBox(height: 20),
         ],
-        
+
         // Botão de medição
         Padding(
           padding: EdgeInsets.all(20),

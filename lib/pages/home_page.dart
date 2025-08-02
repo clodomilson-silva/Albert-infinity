@@ -76,7 +76,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _initializeHealthService() async {
     try {
       await _healthService.initialize();
-      
+
       // Escutar mudanças nos passos
       _healthService.stepsStream.listen((steps) {
         if (mounted) {
@@ -85,7 +85,7 @@ class _HomePageState extends State<HomePage> {
           });
         }
       });
-      
+
       // Escutar mudanças nas calorias
       _healthService.caloriesStream.listen((calories) {
         if (mounted) {
@@ -94,7 +94,7 @@ class _HomePageState extends State<HomePage> {
           });
         }
       });
-      
+
       // Escutar mudanças nos batimentos
       _healthService.heartRateStream.listen((heartRate) {
         if (mounted) {
@@ -103,10 +103,9 @@ class _HomePageState extends State<HomePage> {
           });
         }
       });
-      
+
       // Não iniciar monitoramento automático de batimentos
       // O sensor só será ativado quando o usuário acessar a página de medição
-      
     } catch (e) {
       print('Erro ao inicializar serviço de saúde: $e');
     }
@@ -173,10 +172,7 @@ class _HomePageState extends State<HomePage> {
             ),
             Text(
               "Vamos treinar hoje?",
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: Colors.white70,
-              ),
+              style: GoogleFonts.poppins(fontSize: 14, color: Colors.white70),
             ),
           ],
         ),
@@ -218,10 +214,7 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     const Icon(Icons.logout, color: Colors.red),
                     const SizedBox(width: 8),
-                    Text(
-                      'Sair',
-                      style: GoogleFonts.poppins(color: Colors.red),
-                    ),
+                    Text('Sair', style: GoogleFonts.poppins(color: Colors.red)),
                   ],
                 ),
               ),
@@ -238,25 +231,37 @@ class _HomePageState extends State<HomePage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                MetricTile(title: "Passos", value: currentSteps.toString(), icon: Icons.directions_walk),
-                MetricTile(title: "Calorias", value: currentCalories.toStringAsFixed(0), icon: Icons.local_fire_department),
+                MetricTile(
+                  title: "Passos",
+                  value: currentSteps.toString(),
+                  icon: Icons.directions_walk,
+                ),
+                MetricTile(
+                  title: "Calorias",
+                  value: currentCalories.toStringAsFixed(0),
+                  icon: Icons.local_fire_department,
+                ),
                 GestureDetector(
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const HeartRatePage()),
+                      MaterialPageRoute(
+                        builder: (context) => const HeartRatePage(),
+                      ),
                     );
                   },
                   child: MetricTile(
-                    title: "Batimentos", 
-                    value: currentHeartRate > 0 ? currentHeartRate.toString() : "--", 
-                    icon: Icons.favorite
+                    title: "Batimentos",
+                    value: currentHeartRate > 0
+                        ? currentHeartRate.toString()
+                        : "--",
+                    icon: Icons.favorite,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 30),
-            
+
             // Gráfico de progresso
             Text(
               "Progresso Semanal",
@@ -311,7 +316,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 30),
-            
+
             // Ações rápidas
             Text(
               "Ações Rápidas",
@@ -331,8 +336,8 @@ class _HomePageState extends State<HomePage> {
                     subtitle: "Monitore seu peso",
                     icon: Icons.monitor_weight,
                     onTap: () => Navigator.push(
-                      context, 
-                      MaterialPageRoute(builder: (_) => const ImcPage())
+                      context,
+                      MaterialPageRoute(builder: (_) => const ImcPage()),
                     ),
                   ),
                 ),
@@ -344,8 +349,8 @@ class _HomePageState extends State<HomePage> {
                     subtitle: "Aulas disponíveis",
                     icon: Icons.fitness_center,
                     onTap: () => Navigator.push(
-                      context, 
-                      MaterialPageRoute(builder: (_) => const AulasPage())
+                      context,
+                      MaterialPageRoute(builder: (_) => const AulasPage()),
                     ),
                   ),
                 ),
@@ -388,10 +393,7 @@ class _HomePageState extends State<HomePage> {
             ),
             Text(
               subtitle,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.white70,
-              ),
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70),
             ),
           ],
         ),
