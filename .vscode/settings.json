@@ -1,0 +1,43 @@
+{
+    "dart.flutterSdkPath": null,
+    "dart.debugSdkLibraries": false,
+    "dart.debugExternalPackageLibraries": false,
+    "dart.analysisExcludedFolders": [
+        ".dart_tool/",
+        "build/",
+        "android/",
+        "ios/"
+    ],
+    "dart.flutterRunAdditionalArgs": [
+        "--no-sound-null-safety"
+    ],
+    "dart.previewFlutterUiGuides": true,
+    "dart.previewFlutterUiGuidesCustomTracking": true,
+    "flutter.automaticallyStartDevToolsAfterLaunch": false,
+    "flutter.showMemoryUsage": true,
+    "flutter.showPerformanceOverlay": false,
+    "dart.flutterCreateAndroidLanguage": "kotlin",
+    "dart.flutterCreateIOSLanguage": "swift",
+    "dart.flutterCreatePlatforms": [
+        "android",
+        "ios",
+        "web"
+    ],
+    "dart.flutterGutterIcons": true,
+    "dart.flutterOutline": true,
+    "dart.flutterShowEmulators": "always",
+    "dart.openDevTools": "flutter",
+    "dart.showMainCodeLens": false,
+    "dart.showTestCodeLens": true,
+    "flutter.embedDevToolsDefault": true,
+    "dart.hotReloadOnSave": "all",
+    "dart.debugOpenLogFiles": false,
+    "flutter.showStructuredErrors": true,
+    "dart.lineLength": 100,
+    "dart.insertArgumentPlaceholders": false,
+    "dart.includeDependenciesInWorkspaceSymbols": false,
+    "flutter.sendUsageMetrics": false,
+    "dart.sendUsageMetrics": false,
+    "flutter.enableWebRendererHtml": false,
+    "flutter.enableWebRendererCanvaskit": true
+}

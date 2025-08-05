@@ -64,10 +64,7 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro ao sair: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Erro ao sair: ${e.toString()}'), backgroundColor: Colors.red),
         );
       }
     }
@@ -117,10 +114,7 @@ class _HomePageState extends State<HomePage> {
       builder: (context) => AlertDialog(
         backgroundColor: Colors.grey.shade900,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'Sair da conta',
-          style: GoogleFonts.poppins(color: Colors.white),
-        ),
+        title: Text('Sair da conta', style: GoogleFonts.poppins(color: Colors.white)),
         content: Text(
           'Tem certeza que deseja sair?',
           style: GoogleFonts.poppins(color: Colors.white70),
@@ -128,10 +122,7 @@ class _HomePageState extends State<HomePage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancelar',
-              style: GoogleFonts.poppins(color: Colors.grey),
-            ),
+            child: Text('Cancelar', style: GoogleFonts.poppins(color: Colors.grey)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -142,10 +133,7 @@ class _HomePageState extends State<HomePage> {
               Navigator.pop(context);
               _logout();
             },
-            child: Text(
-              'Sair',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-            ),
+            child: Text('Sair', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -201,10 +189,7 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     const Icon(Icons.person, color: Colors.white),
                     const SizedBox(width: 8),
-                    Text(
-                      'Perfil',
-                      style: GoogleFonts.poppins(color: Colors.white),
-                    ),
+                    Text('Perfil', style: GoogleFonts.poppins(color: Colors.white)),
                   ],
                 ),
               ),
@@ -231,31 +216,35 @@ class _HomePageState extends State<HomePage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                MetricTile(
-                  title: "Passos",
-                  value: currentSteps.toString(),
-                  icon: Icons.directions_walk,
-                ),
-                MetricTile(
-                  title: "Calorias",
-                  value: currentCalories.toStringAsFixed(0),
-                  icon: Icons.local_fire_department,
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const HeartRatePage(),
-                      ),
-                    );
-                  },
+                Expanded(
                   child: MetricTile(
-                    title: "Batimentos",
-                    value: currentHeartRate > 0
-                        ? currentHeartRate.toString()
-                        : "--",
-                    icon: Icons.favorite,
+                    title: "Passos",
+                    value: currentSteps.toString(),
+                    icon: Icons.directions_walk,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: MetricTile(
+                    title: "Calorias",
+                    value: currentCalories.toStringAsFixed(0),
+                    icon: Icons.local_fire_department,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const HeartRatePage()),
+                      );
+                    },
+                    child: MetricTile(
+                      title: "Batimentos",
+                      value: currentHeartRate > 0 ? currentHeartRate.toString() : "--",
+                      icon: Icons.favorite,
+                    ),
                   ),
                 ),
               ],
@@ -306,10 +295,7 @@ class _HomePageState extends State<HomePage> {
                       color: Colors.white,
                       barWidth: 3,
                       dotData: const FlDotData(show: false),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        color: Colors.white.withOpacity(0.2),
-                      ),
+                      belowBarData: BarAreaData(show: true, color: Colors.white.withOpacity(0.2)),
                     ),
                   ],
                 ),
@@ -335,10 +321,8 @@ class _HomePageState extends State<HomePage> {
                     title: "Calcular IMC",
                     subtitle: "Monitore seu peso",
                     icon: Icons.monitor_weight,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ImcPage()),
-                    ),
+                    onTap: () =>
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const ImcPage())),
                   ),
                 ),
                 const SizedBox(width: 15),
@@ -391,10 +375,7 @@ class _HomePageState extends State<HomePage> {
                 color: Colors.white,
               ),
             ),
-            Text(
-              subtitle,
-              style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70),
-            ),
+            Text(subtitle, style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70)),
           ],
         ),
       ),

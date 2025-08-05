@@ -6,17 +6,11 @@ class MetricTile extends StatelessWidget {
   final String value;
   final IconData? icon;
 
-  const MetricTile({
-    super.key,
-    required this.title,
-    required this.value,
-    this.icon,
-  });
+  const MetricTile({super.key, required this.title, required this.value, this.icon});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 110,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.grey.shade900,
@@ -24,13 +18,9 @@ class MetricTile extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade800),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null)
-            Icon(
-              icon!,
-              color: const Color(0xFF7D4FFF),
-              size: 24,
-            ),
+          if (icon != null) Icon(icon!, color: const Color(0xFF7D4FFF), size: 24),
           if (icon != null) const SizedBox(height: 8),
           Text(
             value,
@@ -43,10 +33,7 @@ class MetricTile extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             title,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: Colors.white70,
-            ),
+            style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70),
             textAlign: TextAlign.center,
           ),
         ],

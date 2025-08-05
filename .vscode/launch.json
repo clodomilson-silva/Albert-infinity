@@ -1,0 +1,54 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug - Chrome (Web)",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "chrome",
+            "program": "lib/main.dart",
+            "args": [
+                "--web-port=8080",
+                "--web-browser-flag=--disable-web-security",
+                "--web-browser-flag=--disable-features=VizDisplayCompositor"
+            ],
+            "enableAsserts": true
+        },
+        {
+            "name": "Debug - Android Emulator (Stable)",
+            "request": "launch", 
+            "type": "dart",
+            "deviceId": "stable_emulator",
+            "program": "lib/main.dart",
+            "args": [
+                "--enable-software-rendering",
+                "--disable-gpu",
+                "--no-enable-dart-asserts"
+            ],
+            "preLaunchTask": "Start Stable Android Emulator",
+            "enableAsserts": false
+        },
+        {
+            "name": "Profile - Chrome (Web)",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "chrome", 
+            "program": "lib/main.dart",
+            "flutterMode": "profile",
+            "args": [
+                "--web-port=8080"
+            ]
+        },
+        {
+            "name": "Release - Chrome (Web)",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "chrome",
+            "program": "lib/main.dart", 
+            "flutterMode": "release",
+            "args": [
+                "--web-port=8080"
+            ]
+        }
+    ]
+}

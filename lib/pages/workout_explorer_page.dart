@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/exercise_models.dart';
-import '../services/wger_api_service.dart';
-import 'workout_detail_page.dart';
+import '../models/trainsmart_models.dart';
+import '../services/trainsmart_api_service.dart';
 
 class WorkoutExplorerPage extends StatefulWidget {
-  final WorkoutLevel? initialLevel;
+  final NivelExercicio? initialLevel;
 
   const WorkoutExplorerPage({super.key, this.initialLevel});
 
@@ -14,11 +13,12 @@ class WorkoutExplorerPage extends StatefulWidget {
 }
 
 class _WorkoutExplorerPageState extends State<WorkoutExplorerPage> {
-  final WgerApiService _apiService = WgerApiService.instance;
+  final TrainSmartApiService _apiService = TrainSmartApiService.instance;
   bool _isLoading = false;
-  List<WorkoutPlan> _workoutPlans = [];
-  WorkoutLevel _selectedLevel = WorkoutLevel.beginner;
-  MuscleGroup? _selectedMuscleGroup;
+  List<TrainSmartExercise> _exercises = [];
+  NivelExercicio _selectedLevel = NivelExercicio.iniciante;
+  String? _selectedGrupoMuscular;
+  List<String> _gruposMusculares = [];
 
   @override
   void initState() {
@@ -26,29 +26,54 @@ class _WorkoutExplorerPageState extends State<WorkoutExplorerPage> {
     if (widget.initialLevel != null) {
       _selectedLevel = widget.initialLevel!;
     }
-    _loadWorkoutPlans();
+    _loadData();
   }
 
-  Future<void> _loadWorkoutPlans() async {
+  Future<void> _loadData() async {
+    await _loadGruposMusculares();
+    await _loadExercises();
+  }
+
+  Future<void> _loadGruposMusculares() async {
+    try {
+      final grupos = await _apiService.getGruposMusculares();
+      setState(() {
+        _gruposMusculares = grupos;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao carregar grupos musculares: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _loadExercises() async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      List<WorkoutPlan> plans = [];
+      final exercises = await _apiService.getExercises(
+        grupoMuscular: _selectedGrupoMuscular,
+        limit: 50,
+      );
 
-      // Gerar planos para diferentes tipos
-      for (WorkoutType type in WorkoutType.values) {
-        final plan = await _apiService.generateWorkoutPlan(
-          level: _selectedLevel,
-          type: type,
-          targetMuscleGroup: _selectedMuscleGroup,
-        );
-        plans.add(plan);
+      // Filtrar por nível se necessário
+      List<TrainSmartExercise> filteredExercises = exercises;
+      if (_selectedLevel != NivelExercicio.iniciante) {
+        filteredExercises = exercises.where((exercise) {
+          final exerciseLevel = exercise.nivel?.toLowerCase() ?? 'iniciante';
+          return exerciseLevel == _getLevelString(_selectedLevel);
+        }).toList();
       }
 
       setState(() {
-        _workoutPlans = plans;
+        _exercises = filteredExercises;
         _isLoading = false;
       });
     } catch (e) {
@@ -57,12 +82,20 @@ class _WorkoutExplorerPageState extends State<WorkoutExplorerPage> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro ao carregar treinos: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Erro ao carregar exercícios: $e'), backgroundColor: Colors.red),
         );
       }
+    }
+  }
+
+  String _getLevelString(NivelExercicio nivel) {
+    switch (nivel) {
+      case NivelExercicio.iniciante:
+        return 'iniciante';
+      case NivelExercicio.intermediario:
+        return 'intermediario';
+      case NivelExercicio.avancado:
+        return 'avancado';
     }
   }
 
@@ -74,11 +107,8 @@ class _WorkoutExplorerPageState extends State<WorkoutExplorerPage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          "Explorar Treinos",
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-          ),
+          "Explorar Exercícios",
+          style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -90,10 +120,8 @@ class _WorkoutExplorerPageState extends State<WorkoutExplorerPage> {
           // Filtros
           _buildFilters(),
 
-          // Lista de treinos
-          Expanded(
-            child: _isLoading ? _buildLoadingWidget() : _buildWorkoutList(),
-          ),
+          // Lista de exercícios
+          Expanded(child: _isLoading ? _buildLoadingWidget() : _buildExerciseList()),
         ],
       ),
     );
@@ -117,7 +145,7 @@ class _WorkoutExplorerPageState extends State<WorkoutExplorerPage> {
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: WorkoutLevel.values.map((level) {
+            children: NivelExercicio.values.map((level) {
               return Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -126,14 +154,12 @@ class _WorkoutExplorerPageState extends State<WorkoutExplorerPage> {
                       setState(() {
                         _selectedLevel = level;
                       });
-                      _loadWorkoutPlans();
+                      _loadExercises();
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       decoration: BoxDecoration(
-                        color: _selectedLevel == level
-                            ? level.color
-                            : Colors.grey.shade800,
+                        color: _selectedLevel == level ? level.cor : Colors.grey.shade800,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -168,33 +194,33 @@ class _WorkoutExplorerPageState extends State<WorkoutExplorerPage> {
             height: 100,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: MuscleGroup.values.length + 1, // +1 para "Todos"
+              itemCount: _gruposMusculares.length + 1, // +1 para "Todos"
               itemBuilder: (context, index) {
                 if (index == 0) {
                   // Opção "Todos"
                   return _buildMuscleGroupCard(
                     name: "Todos",
                     icon: Icons.fitness_center,
-                    isSelected: _selectedMuscleGroup == null,
+                    isSelected: _selectedGrupoMuscular == null,
                     onTap: () {
                       setState(() {
-                        _selectedMuscleGroup = null;
+                        _selectedGrupoMuscular = null;
                       });
-                      _loadWorkoutPlans();
+                      _loadExercises();
                     },
                   );
                 }
 
-                final muscleGroup = MuscleGroup.values[index - 1];
+                final grupoMuscular = _gruposMusculares[index - 1];
                 return _buildMuscleGroupCard(
-                  name: muscleGroup.displayName,
-                  icon: muscleGroup.icon,
-                  isSelected: _selectedMuscleGroup == muscleGroup,
+                  name: grupoMuscular,
+                  icon: _getIconForMuscleGroup(grupoMuscular),
+                  isSelected: _selectedGrupoMuscular == grupoMuscular,
                   onTap: () {
                     setState(() {
-                      _selectedMuscleGroup = muscleGroup;
+                      _selectedGrupoMuscular = grupoMuscular;
                     });
-                    _loadWorkoutPlans();
+                    _loadExercises();
                   },
                 );
               },
@@ -203,6 +229,27 @@ class _WorkoutExplorerPageState extends State<WorkoutExplorerPage> {
         ],
       ),
     );
+  }
+
+  IconData _getIconForMuscleGroup(String grupo) {
+    switch (grupo.toLowerCase()) {
+      case 'peito':
+        return Icons.fitness_center;
+      case 'costas':
+        return Icons.view_column;
+      case 'pernas':
+        return Icons.directions_run;
+      case 'braços':
+      case 'bracos':
+        return Icons.sports_handball;
+      case 'ombros':
+        return Icons.expand_more;
+      case 'abdômen':
+      case 'abdomen':
+        return Icons.crop_square;
+      default:
+        return Icons.fitness_center;
+    }
   }
 
   Widget _buildMuscleGroupCard({
@@ -247,14 +294,14 @@ class _WorkoutExplorerPageState extends State<WorkoutExplorerPage> {
         children: [
           CircularProgressIndicator(color: Color(0xFF7D4FFF)),
           SizedBox(height: 16),
-          Text('Carregando treinos...', style: TextStyle(color: Colors.white)),
+          Text('Carregando exercícios...', style: TextStyle(color: Colors.white)),
         ],
       ),
     );
   }
 
-  Widget _buildWorkoutList() {
-    if (_workoutPlans.isEmpty) {
+  Widget _buildExerciseList() {
+    if (_exercises.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -262,7 +309,7 @@ class _WorkoutExplorerPageState extends State<WorkoutExplorerPage> {
             const Icon(Icons.fitness_center, color: Colors.grey, size: 64),
             const SizedBox(height: 16),
             Text(
-              'Nenhum treino encontrado',
+              'Nenhum exercício encontrado',
               style: GoogleFonts.poppins(color: Colors.grey, fontSize: 16),
             ),
             const SizedBox(height: 8),
@@ -277,163 +324,175 @@ class _WorkoutExplorerPageState extends State<WorkoutExplorerPage> {
 
     return ListView.builder(
       padding: const EdgeInsets.all(20),
-      itemCount: _workoutPlans.length,
+      itemCount: _exercises.length,
       itemBuilder: (context, index) {
-        final plan = _workoutPlans[index];
-        return _buildWorkoutPlanCard(plan);
+        final exercise = _exercises[index];
+        return _buildExerciseCard(exercise);
       },
     );
   }
 
-  Widget _buildWorkoutPlanCard(WorkoutPlan plan) {
+  Widget _buildExerciseCard(TrainSmartExercise exercise) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      child: GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => WorkoutDetailPage(workoutPlan: plan),
-            ),
-          );
-        },
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade900,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade800),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: plan.level.color.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      plan.type.icon,
-                      color: plan.level.color,
-                      size: 24,
-                    ),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade900,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade800),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: exercise.corNivel.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          plan.name,
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          plan.description,
-                          style: GoogleFonts.poppins(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: plan.level.color,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      plan.level.displayName,
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  _buildInfoChip(
-                    icon: Icons.timer,
-                    text: '${plan.estimatedDuration} min',
-                  ),
-                  const SizedBox(width: 12),
-                  _buildInfoChip(
-                    icon: Icons.fitness_center,
-                    text: '${plan.exercises.length} exercícios',
-                  ),
-                ],
-              ),
-              if (plan.targetMuscles.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: plan.targetMuscles.take(3).map((muscle) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade800,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        muscle,
+                  child: Icon(exercise.iconeGrupoMuscular, color: exercise.corNivel, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        exercise.nome,
                         style: GoogleFonts.poppins(
-                          color: Colors.white70,
-                          fontSize: 10,
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    );
-                  }).toList(),
+                      const SizedBox(height: 4),
+                      Text(
+                        exercise.descricao.length > 80
+                            ? '${exercise.descricao.substring(0, 80)}...'
+                            : exercise.descricao,
+                        style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: exercise.corNivel,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    exercise.nivel ?? "Iniciante",
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
               ],
+            ),
+
+            // GIF do exercício se disponível
+            if (exercise.gifUrl != null && exercise.gifUrl!.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    exercise.gifUrl!,
+                    height: 200,
+                    width: 200,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 200,
+                        width: 200,
+                        color: Colors.grey.shade800,
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF7D4FFF),
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 200,
+                        width: 200,
+                        color: Colors.grey.shade800,
+                        child: Center(
+                          child: Icon(
+                            exercise.iconeGrupoMuscular,
+                            color: const Color(0xFF7D4FFF),
+                            size: 48,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
             ],
-          ),
+
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                _buildInfoChip(
+                  icon: Icons.category,
+                  text: exercise.grupoMuscular,
+                  color: Colors.purple,
+                ),
+                const SizedBox(width: 12),
+                _buildInfoChip(
+                  icon: Icons.fitness_center,
+                  text: exercise.equipamento,
+                  color: Colors.orange,
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildInfoChip({required IconData icon, required String text}) {
+  Widget _buildInfoChip({required IconData icon, required String text, required Color color}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFF7D4FFF).withOpacity(0.2),
+        color: color.withOpacity(0.2),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: const Color(0xFF7D4FFF), size: 14),
+          Icon(icon, color: color, size: 14),
           const SizedBox(width: 4),
           Text(
             text,
-            style: GoogleFonts.poppins(
-              color: const Color(0xFF7D4FFF),
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-            ),
+            style: GoogleFonts.poppins(color: color, fontSize: 10, fontWeight: FontWeight.w500),
           ),
         ],
       ),
     );
+  }
+}
+
+extension NivelExercicioExtension on NivelExercicio {
+  Color get cor {
+    switch (this) {
+      case NivelExercicio.iniciante:
+        return Colors.green;
+      case NivelExercicio.intermediario:
+        return Colors.orange;
+      case NivelExercicio.avancado:
+        return Colors.red;
+    }
   }
 }

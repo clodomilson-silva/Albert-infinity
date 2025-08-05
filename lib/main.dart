@@ -6,6 +6,7 @@ import 'widgets/auth_wrapper.dart';
 import 'pages/login_page.dart';
 import 'pages/register_page.dart';
 import 'pages/test_image_page.dart';
+import 'pages/api_test_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +28,7 @@ class AlbertInfinityApp extends StatelessWidget {
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
         '/test-images': (context) => const TestImageWidget(),
+        '/api-test': (context) => const ApiTestPage(),
       },
     );
   }
